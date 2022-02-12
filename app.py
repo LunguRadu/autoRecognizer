@@ -47,3 +47,7 @@ def predict():
     response.headers.add('Access-Control-Allow-Origin', '*')
     print(prediction)
     return "This"
+
+
+if __name__ == '__main__':
+    Flask.run(app)

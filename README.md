@@ -31,4 +31,4 @@ Make sure that your virtual environment is active and run the following command
 
 6. Run the application on the local environment
 
-Run `python3 app.py`. Make sure that you are in the `app` folder. 
+Run `python3 app.py`. 
