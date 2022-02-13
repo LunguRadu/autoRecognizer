@@ -12,7 +12,8 @@
 <body>
     <input id="image-selector" type="file">
     <button id="predict-button">Predict</button>
-    <p style="font-weight:bold">Predictions</p>
+    <p>Car: <span id="car-prediction"></span></p>
+    <p style="font-weight:bold">Car picture</p>
     <img id="selected-image" src=""/>
 
 <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -27,8 +28,7 @@
             console.log(base64Image);
         }
         reader.readAsDataURL($("#image-selector")[0].files[0]);
-        $("#dog-prediction").text("");
-        $("#cat-prediction").text("");
+        $("#car-prediction").text("");
     });
 
     $("#predict-button").click(function(){
@@ -37,9 +37,8 @@
         }
         console.log(message);
         $.post("http://127.0.0.1:5000/predict", JSON.stringify(message), function(response){
-            $("#dog-prediction").text(response.prediction.dog.toFixed(6));
-            $("#cat-prediction").text(response.prediction.cat.toFixed(6));
             console.log(response);
+            $("#car-prediction").text(response.prediction);
         });
     });
 </script>

@@ -1,16 +1,23 @@
 import base64
+import json
+
 import numpy as np
 import io
+import re
 from PIL import Image
 from tensorflow import keras
 from tensorflow.keras.models import Sequential, load_model
 from keras.models import load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator, img_to_array
-from flask import request
+from flask import request, render_template
 from flask import jsonify
 from flask import Flask
+from flask_cors import CORS
+
+
 
 app = Flask(__name__)
+CORS(app)
 
 
 # Function to get the model
@@ -35,18 +42,24 @@ get_model()
 
 @app.route("/predict", methods=["POST"])
 def predict():
+
     message = request.get_json(force=True)
     encoded = message['image']
-    decoded = base64.b64decode(encoded)
-    print(type(decoded))
-    # print("This is before PIL")
+    image_data = re.sub('^data:image/.+;base64,', '', encoded)
+    decoded = base64.b64decode(image_data)
     image = Image.open(io.BytesIO(decoded))
-    # processed_image = preprocess_image(image, target_size=(224, 224))
-    print("This is after PIL")
-    prediction = model.predict(processed_image).tolist()
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    print(prediction)
-    return "This"
+    processed_image = preprocess_image(image, target_size=(224, 224))
+    class_index = np.argmax(model.predict(processed_image), axis=-1)[0]
+    # prediction = get_class(class_index)
+    response = {"prediction": get_class(class_index)}
+    # return render_template("predict.html", prediction=prediction)
+    return jsonify(response)
+
+
+def get_class(class_index):
+    with open('classes.json') as json_file:
+        classes_dic = json.load(json_file)
+        return classes_dic[str(class_index)]
 
 
 if __name__ == '__main__':
