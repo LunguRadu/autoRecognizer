@@ -65,9 +65,8 @@ def predict():
     prediction = model.predict(processed_image)[0]
     top_5_indices = (-prediction).argsort()[:NUMBER_PREDICTION]
     prediction_confidence = get_prediction_confidence(top_5_indices, prediction, NUMBER_PREDICTION)
-    response = dict({"prediction":prediction_confidence})
-    return jsonify(response)
-
+    response = {"prediction":str(prediction_confidence)}
+    return json.dumps(response)
 
 def get_prediction_confidence(class_indices, prediction_percentage, NUMBER_PREDICTION):
     with open('bodyType_classes.json') as json_file:
