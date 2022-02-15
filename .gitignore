@@ -2,4 +2,4 @@ virtual/
 __pycache__/
 .idea
 .DS_Store
-autovgg15model.h5
+*.h5
