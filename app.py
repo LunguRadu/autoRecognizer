@@ -12,8 +12,7 @@ from flask import request, render_template
 from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
-
-
+from google.cloud import storage
 
 app = Flask(__name__)
 CORS(app)
@@ -22,8 +21,12 @@ CORS(app)
 # Function to get the model
 def get_model():
     global model
-    model = load_model('fine_tuning_vgg16_1.h5')
-    # model = load_model('autovgg15model.h5')
+    storage_client = storage.Client.from_service_account_json(
+        'google-credentials.json')
+    bucket = storage_client.bucket("vgg16_auto_model")
+    model_vgg = bucket.get_blob("autovgg15model.h5")
+    model_vgg.download_to_filename("fine_tuning_body_v1.h5")
+    model = load_model('fine_tuning_body_v1.h5')
     print(" * Model loaded!")
 
 
@@ -43,6 +46,7 @@ get_model()
 @app.route("/predict", methods=["POST"])
 def predict():
 
+    # Flask version
     # message = request.get_json(force=True)
     # encoded = message['image']
     # image_data = re.sub('^data:image/.+;base64,', '', encoded)
@@ -52,9 +56,9 @@ def predict():
     # class_index = np.argmax(model.predict(processed_image), axis=-1)[0]
     # # prediction = get_class(class_index)
     # response = {"prediction": get_class(class_index)}
-    # # return render_template("predict.html", prediction=prediction)
     # return jsonify(response)
 
+    # Svelte version
     NUMBER_PREDICTION = 5
     message = request.get_json(force=True)
     encoded = message['image']
@@ -68,8 +72,9 @@ def predict():
     response = {"prediction":str(prediction_confidence)}
     return json.dumps(response)
 
+
 def get_prediction_confidence(class_indices, prediction_percentage, NUMBER_PREDICTION):
-    with open('bodyType_classes.json') as json_file:
+    with open('res/bodyType_classes.json') as json_file:
         classes_dic = json.load(json_file)
         result = dict()
         for index in range(NUMBER_PREDICTION): # 0 --> 5 top 5 prediction
@@ -77,8 +82,9 @@ def get_prediction_confidence(class_indices, prediction_percentage, NUMBER_PREDI
             result[classes_dic[str(class_index)]] = prediction_percentage[class_index]
         return result
 
+
 def get_class(class_index):
-    with open('bodyType_classes.json') as json_file:
+    with open('res/bodyType_classes.json') as json_file:
         classes_dic = json.load(json_file)
         return classes_dic[str(class_index)]
 
