@@ -1,5 +1,7 @@
 import base64
 import json
+import logging
+
 import numpy as np
 import io
 import re
@@ -91,3 +93,6 @@ def get_class(class_index):
 
 if __name__ == '__main__':
     Flask.run(app)
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
