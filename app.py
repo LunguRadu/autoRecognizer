@@ -42,7 +42,7 @@ def preprocess_image(image, target_size):
 
 
 print(" * Loading Keras model...")
-get_model()
+# get_model()
 
 
 @app.route("/predict", methods=["POST"])
@@ -59,6 +59,7 @@ def predict():
     # # prediction = get_class(class_index)
     # response = {"prediction": get_class(class_index)}
     # return jsonify(response)
+    get_model()
 
     # Svelte version
     NUMBER_PREDICTION = 5
