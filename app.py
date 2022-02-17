@@ -6,8 +6,6 @@ import numpy as np
 import io
 import re
 from PIL import Image
-from tensorflow import keras
-from keras.models import Sequential, load_model
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator, img_to_array
 from flask import request, render_template

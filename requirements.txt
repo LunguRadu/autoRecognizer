@@ -6,4 +6,4 @@ keras==2.8.0
 Keras-Preprocessing==1.1.2
 numpy==1.19.5
 Pillow==8.4.0
-tensorflow==2.8.0
+# tensorflow==2.6.2
