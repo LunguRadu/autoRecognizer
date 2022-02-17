@@ -1,7 +1,6 @@
 Flask==2.0.2
 Flask-Cors==3.0.10
 gunicorn==20.1.0
-Jinja2==3.0.3
 keras==2.6.0
 # Keras-Preprocessing==1.1.2
 numpy==1.19.5
