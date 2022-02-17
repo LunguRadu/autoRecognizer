@@ -9,7 +9,6 @@ from PIL import Image
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator, img_to_array
 from flask import request, render_template
-from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
 from google.cloud import storage
@@ -40,7 +39,7 @@ def preprocess_image(image, target_size):
 
 
 print(" * Loading Keras model...")
-# get_model()
+get_model()
 
 
 @app.route("/predict", methods=["POST"])
