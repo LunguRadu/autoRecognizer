@@ -59,7 +59,7 @@ def predict():
     # # prediction = get_class(class_index)
     # response = {"prediction": get_class(class_index)}
     # return jsonify(response)
-    get_model()
+    # get_model()
 
     # Svelte version
     NUMBER_PREDICTION = 5
