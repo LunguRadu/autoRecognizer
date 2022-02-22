@@ -1,20 +1,18 @@
 import base64
 import json
 from unicodedata import name
+import logging
+
 import numpy as np
 import io
 import re
 from PIL import Image
-from tensorflow import keras
-from keras.models import Sequential, load_model
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator, img_to_array
 from flask import request, render_template
-from flask import jsonify
 from flask import Flask
 from flask_cors import CORS
-
-
+from google.cloud import storage
 
 app = Flask(__name__)
 """
@@ -29,20 +27,13 @@ CORS(app)
 
 # Function to get the model
 def get_model():
-    # global model
-    # model = load_model('fine_tuning_vgg16_1.h5')
-    # model = load_model('autovgg15model.h5')
-    global fine_tuning_vgg16_1_model
-    global fine_tuning_vgg16_2_model
-    global vgg_structure_model
-    global vgg16_2_model
-    global vgg16_model
-    fine_tuning_vgg16_1_model = load_model('fine_tuning_vgg16_1.h5')
-    fine_tuning_vgg16_2_model = load_model('fine_tuning_vgg16_2.h5')
-    vgg_structure_model = load_model('vgg16_structure.h5')
-    vgg16_2_model = load_model('vgg16_2.h5')
-    vgg16_model = load_model('vgg16.h5')
-
+    global model
+    storage_client = storage.Client.from_service_account_json(
+        'google-credentials.json')
+    bucket = storage_client.bucket("vgg16_auto_model")
+    model_vgg = bucket.get_blob("autovgg15model.h5")
+    model_vgg.download_to_filename("fine_tuning_body_v1.h5")
+    model = load_model('fine_tuning_body_v1.h5')
     print(" * Model loaded!")
 
 
@@ -62,6 +53,7 @@ get_model()
 @app.route("/predict", methods=["POST"])
 def predict():
 
+    # Flask version
     # message = request.get_json(force=True)
     # encoded = message['image']
     # image_data = re.sub('^data:image/.+;base64,', '', encoded)
@@ -71,9 +63,10 @@ def predict():
     # class_index = np.argmax(model.predict(processed_image), axis=-1)[0]
     # # prediction = get_class(class_index)
     # response = {"prediction": get_class(class_index)}
-    # # return render_template("predict.html", prediction=prediction)
     # return jsonify(response)
+    # get_model()
 
+    # Svelte version
     NUMBER_PREDICTION = 5
     message = request.get_json(force=True)
     encoded = message['image']
@@ -83,26 +76,9 @@ def predict():
     #  Preprocess image for Models
     processed_image = preprocess_image(image, target_size=(224, 224))
     # Model order array
-    MODEL_NAME =  [ 'fine_tuning_vgg16_1_model','fine_tuning_vgg16_2_model', 'vgg_structure_model', 'vgg16_2_model', 'vgg16_model']
-    response = dict()
-    for name, model in zip(MODEL_NAME, [fine_tuning_vgg16_1_model,fine_tuning_vgg16_2_model, vgg_structure_model, vgg16_2_model, vgg16_model]):
-        response[name] = getPrediction(model,processed_image, NUMBER_PREDICTION)
-    print(response)
-    print(jsonify(response))
-    print(json.dumps(response))
-    return jsonify(response)
+    response = getPrediction(model,processed_image, NUMBER_PREDICTION)
+    return json.jsonify(response)
 
-def get_prediction_confidence(class_indices, prediction_percentage, NUMBER_PREDICTION):
-    with open('bodyType_classes.json') as json_file:
-        classes_dic = json.load(json_file)
-        result = dict()
-        order = []
-        for index in range(NUMBER_PREDICTION): # 0 --> 5 top 5 prediction
-            class_index = class_indices[index]
-            class_name = classes_dic[str(class_index)]
-            result[class_name] = str(prediction_percentage[class_index])
-            order.append(class_name)
-        return result, order
 
 def getPrediction(model,  preprocessed_image, number_top_prediction):
     #  get prediction from model
@@ -113,6 +89,18 @@ def getPrediction(model,  preprocessed_image, number_top_prediction):
     prediction_confidence, classification_order = get_prediction_confidence(top_indices, prediction, number_top_prediction)
     return {"confidence":prediction_confidence, "order": classification_order}
 
+def get_prediction_confidence(class_indices, prediction_percentage, NUMBER_PREDICTION):
+    with open('res/bodyType_classes.json') as json_file:
+        classes_dic = json.load(json_file)
+        result = dict()
+        order = []
+        for index in range(NUMBER_PREDICTION): # 0 --> 5 top 5 prediction
+            class_index = class_indices[index]
+            class_name = classes_dic[str(class_index)]
+            result[class_name] = str(prediction_percentage[class_index])
+            order.append(class_name)
+        return result, order
+
 # def get_class(class_index):
 #     with open('bodyType_classes.json') as json_file:
 #         classes_dic = json.load(json_file)
@@ -120,4 +108,7 @@ def getPrediction(model,  preprocessed_image, number_top_prediction):
 
 
 if __name__ == '__main__':
-    Flask.run(app)
+    app.run()
+    gunicorn_logger = logging.getLogger('gunicorn.error')
+    app.logger.handlers = gunicorn_logger.handlers
+    app.logger.setLevel(gunicorn_logger.level)
