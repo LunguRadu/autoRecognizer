@@ -1,5 +1,6 @@
 import base64
 import json
+from flask import jsonify
 from unicodedata import name
 import logging
 
@@ -8,11 +9,12 @@ import io
 import re
 from PIL import Image
 from keras.models import load_model
-from keras.preprocessing.image import ImageDataGenerator, img_to_array
-from flask import request, render_template
+from keras.preprocessing.image import img_to_array
+from flask import request
 from flask import Flask
 from flask_cors import CORS
-from google.cloud import storage
+from flask_ngrok import run_with_ngrok
+# from google.cloud import storage
 
 app = Flask(__name__)
 """
@@ -20,20 +22,16 @@ For deployment:
 change the CORS policy below to heroku frontend only 
 """
 ## For produciton 
-# CORS(app, origins=["https://cs484-cnn-classifier.herokuapp.com/:7800"])
+# CORS(app, origins=["https://cs484-cnn-classifier.herokuapp.com"])
 ## For development 
 CORS(app)
+run_with_ngrok(app)
 
 
 # Function to get the model
 def get_model():
     global model
-    storage_client = storage.Client.from_service_account_json(
-        'google-credentials.json')
-    bucket = storage_client.bucket("vgg16_auto_model")
-    model_vgg = bucket.get_blob("autovgg15model.h5")
-    model_vgg.download_to_filename("fine_tuning_body_v1.h5")
-    model = load_model('fine_tuning_body_v1.h5')
+    model = load_model('vgg16_2.h5')
     print(" * Model loaded!")
 
 
@@ -76,8 +74,9 @@ def predict():
     #  Preprocess image for Models
     processed_image = preprocess_image(image, target_size=(224, 224))
     # Model order array
-    response = getPrediction(model,processed_image, NUMBER_PREDICTION)
-    return json.jsonify(response)
+    response = dict()
+    response['vgg16_2_model']= getPrediction(model,processed_image, NUMBER_PREDICTION)
+    return jsonify(response)
 
 
 def getPrediction(model,  preprocessed_image, number_top_prediction):
